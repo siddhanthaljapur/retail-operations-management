@@ -47,7 +47,9 @@ const Notification = mongoose.model('Notification', notificationSchema);
 const mapId = (docs) => docs.map(d => { const obj = d._doc; return { ...obj, id: obj._id.toString(), productId: obj._id.toString() }; });
 
 // Routes - Products
-app.get('/api/products', async (req, res) => res.json(mapId(await Product.find())));
+app.get('/api/products', async (req, res) => {
+  try { res.json(mapId(await Product.find())); } catch (err) { res.status(500).json({ error: err.message }); }
+});
 app.get('/api/products/:id', async (req, res) => {
   try {
     const p = await Product.findById(req.params.id);
@@ -62,20 +64,36 @@ app.get('/api/products/barcode/:barcode', async (req, res) => {
     res.json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.post('/api/products', async (req, res) => { const p = await new Product(req.body).save(); res.status(201).json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() }); });
-app.delete('/api/products/:id', async (req, res) => { await Product.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted' }); });
+app.post('/api/products', async (req, res) => {
+  try { const p = await new Product(req.body).save(); res.status(201).json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() }); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+app.delete('/api/products/:id', async (req, res) => {
+  try { await Product.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted' }); } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // Routes - Customers
-app.get('/api/customers', async (req, res) => res.json(mapId(await Customer.find())));
-app.post('/api/customers', async (req, res) => { const c = await new Customer(req.body).save(); res.status(201).json({ ...c._doc, id: c._id.toString() }); });
+app.get('/api/customers', async (req, res) => {
+  try { res.json(mapId(await Customer.find())); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+app.post('/api/customers', async (req, res) => {
+  try { const c = await new Customer(req.body).save(); res.status(201).json({ ...c._doc, id: c._id.toString() }); } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // Routes - Bills
-app.get('/api/bills', async (req, res) => res.json(mapId(await Bill.find())));
-app.post('/api/bills', async (req, res) => { const b = await new Bill(req.body).save(); res.status(201).json({ ...b._doc, id: b._id.toString() }); });
+app.get('/api/bills', async (req, res) => {
+  try { res.json(mapId(await Bill.find())); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+app.post('/api/bills', async (req, res) => {
+  try { const b = await new Bill(req.body).save(); res.status(201).json({ ...b._doc, id: b._id.toString() }); } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // Routes - Users & Notifications
-app.get('/api/users', async (req, res) => res.json(mapId(await User.find())));
-app.get('/api/notifications', async (req, res) => res.json(mapId(await Notification.find())));
+app.get('/api/users', async (req, res) => {
+  try { res.json(mapId(await User.find())); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+app.get('/api/notifications', async (req, res) => {
+  try { res.json(mapId(await Notification.find())); } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // Routes - Analytics (Real aggregations)
 app.get('/api/analytics/report', async (req, res) => {
