@@ -119,18 +119,22 @@ export default function CustomerList() {
       const billMap = new Map();
       billData.forEach(bill => bill.billId && billMap.set(bill.billId, bill));
       const processed = customerData.map(customer => {
-        let totalCount = 0;
+        let totalCount = customer.totalPurchases || 0;
         let latestDate = null;
-        if (customer.purchaseHistory?.length > 0) {
-          totalCount = customer.purchaseHistory.length;
-          customer.purchaseHistory.forEach(billId => {
-            const bill = billMap.get(billId);
-            if (bill?.createdAt) {
-              const date = new Date(bill.createdAt);
-              if (!latestDate || date > latestDate) latestDate = date;
+        
+        // Find all bills for this customer
+        const customerBills = billData.filter(b => b.customerId === customer.id || b.customerId === customer.name);
+        
+        if (customerBills.length > 0) {
+          totalCount = customerBills.length; // Accurate count based on bills
+          customerBills.forEach(bill => {
+            const date = bill.date ? new Date(bill.date) : (bill.createdAt ? new Date(bill.createdAt) : null);
+            if (date && (!latestDate || date > latestDate)) {
+              latestDate = date;
             }
           });
         }
+
         return {
           ...customer,
           totalPurchaseCount: totalCount,
