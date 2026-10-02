@@ -4,12 +4,55 @@ import api from '../../api/apiClient';
 
 export default function AIInvoiceScanner({ onClose, onComplete }) {
   const { showToast } = useToast();
+  // Camera and scanning states
   const [isScanning, setIsScanning] = useState(false);
   const [scannedItems, setScannedItems] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  
+  // Real camera states
+  const videoRef = React.useRef(null);
+  const streamRef = React.useRef(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
-  // Mock AI scanning process
+  // Stop camera when component unmounts or closes
+  React.useEffect(() => {
+    return () => stopCamera();
+  }, []);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Prefer back camera on phones
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      streamRef.current = stream;
+      setIsCameraOpen(true);
+    } catch (err) {
+      showToast('Camera access denied or unavailable.', 'error');
+      // Fallback to direct mock scan if camera fails
+      simulateAIScan();
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setIsCameraOpen(false);
+  };
+
+  // Triggered when they click "Capture" on the camera feed
+  const handleCapture = () => {
+    // Play a shutter sound or flash effect here if desired
+    stopCamera();
+    simulateAIScan();
+  };
+
+  // Mock AI scanning process (simulating OCR)
   const simulateAIScan = () => {
     setIsScanning(true);
     setProgress(0);
@@ -44,20 +87,15 @@ export default function AIInvoiceScanner({ onClose, onComplete }) {
         try {
           const res = await api.get(`/api/products/barcode/${item.barcode}`);
           if (res.data) {
-            // Update quantity
             await api.put(`/api/products/${res.data.id}`, {
               ...res.data,
               quantity: res.data.quantity + item.quantity,
-              costPrice: item.costPrice // update latest cost
+              costPrice: item.costPrice
             });
           }
         } catch (e) {
-          // If not found, create it (assuming price = cost + 20% margin for demo)
           await api.post('/api/products', {
-            ...item,
-            category: 'Auto-Scanned',
-            price: Math.round(item.costPrice * 1.2),
-            reorderLevel: 5
+            ...item, category: 'Auto-Scanned', price: Math.round(item.costPrice * 1.2), reorderLevel: 5
           });
         }
       }
@@ -80,13 +118,14 @@ export default function AIInvoiceScanner({ onClose, onComplete }) {
             </svg>
             <h2 className="text-xl font-bold">AI Invoice Scanner</h2>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors">
+          <button onClick={() => { stopCamera(); onClose(); }} className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
 
         <div className="p-6 overflow-y-auto custom-scrollbar">
-          {!isScanning && scannedItems.length === 0 && (
+          {/* Initial State (Before Camera) */}
+          {!isScanning && !isCameraOpen && scannedItems.length === 0 && (
             <div className="text-center py-8">
               <div className="w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-purple-600 dark:text-purple-400">
                 <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,12 +139,35 @@ export default function AIInvoiceScanner({ onClose, onComplete }) {
               </p>
               
               <button 
-                onClick={simulateAIScan}
+                onClick={startCamera}
                 className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-700 hover:to-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
-                Take Photo of Bill
+                Open Camera
               </button>
+            </div>
+          )}
+
+          {/* Real Camera Feed */}
+          {isCameraOpen && (
+            <div className="flex flex-col items-center">
+              <div className="relative w-full aspect-[3/4] bg-black rounded-2xl overflow-hidden mb-6 border-4 border-gray-200 dark:border-gray-700">
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                {/* Aiming Reticle */}
+                <div className="absolute inset-8 border-2 border-white/50 border-dashed rounded-lg"></div>
+              </div>
+              <button 
+                onClick={handleCapture}
+                className="w-16 h-16 bg-white rounded-full border-4 border-purple-500 shadow-lg shadow-purple-500/30 flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <div className="w-12 h-12 bg-purple-600 rounded-full"></div>
+              </button>
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 font-medium">Align bill within the frame and capture</p>
             </div>
           )}
 
