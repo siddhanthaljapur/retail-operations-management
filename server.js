@@ -48,7 +48,21 @@ const mapId = (docs) => docs.map(d => { const obj = d._doc; return { ...obj, id:
 
 // Routes - Products
 app.get('/api/products', async (req, res) => res.json(mapId(await Product.find())));
-app.post('/api/products', async (req, res) => { const p = await new Product(req.body).save(); res.status(201).json({ ...p._doc, productId: p._id.toString() }); });
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const p = await Product.findById(req.params.id);
+    if (!p) return res.status(404).json({ error: 'Not found' });
+    res.json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+app.get('/api/products/barcode/:barcode', async (req, res) => {
+  try {
+    const p = await Product.findOne({ barcode: req.params.barcode });
+    if (!p) return res.status(404).json({ error: 'Not found' });
+    res.json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+app.post('/api/products', async (req, res) => { const p = await new Product(req.body).save(); res.status(201).json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() }); });
 app.delete('/api/products/:id', async (req, res) => { await Product.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted' }); });
 
 // Routes - Customers
@@ -107,6 +121,24 @@ app.post('/api/auth/refresh', (req, res) => {
     { expiresIn: '7d' }
   );
   res.json({ accessToken: token, refreshToken: "dummy_refresh_token" });
+});
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { email, password, name, role } = req.body;
+    // Save user to MongoDB
+    const newUser = await new User({ email, name, role: role || 'OWNER', status: 'ACTIVE' }).save();
+    
+    // Issue token immediately after signup
+    const token = jwt.sign(
+      { sub: email, role: newUser.role }, 
+      JWT_SECRET, 
+      { expiresIn: '7d' }
+    );
+    res.status(201).json({ accessToken: token, refreshToken: "dummy_refresh_token", user: newUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Serve static React frontend
