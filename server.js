@@ -50,16 +50,16 @@ const mapId = (docs) => docs.map(d => { const obj = d._doc; return { ...obj, id:
 app.get('/api/products', async (req, res) => {
   try { res.json(mapId(await Product.find())); } catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/products/:id', async (req, res) => {
+app.get('/api/products/barcode/:barcode', async (req, res) => {
   try {
-    const p = await Product.findById(req.params.id);
+    const p = await Product.findOne({ barcode: req.params.barcode });
     if (!p) return res.status(404).json({ error: 'Not found' });
     res.json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/products/barcode/:barcode', async (req, res) => {
+app.get('/api/products/:id', async (req, res) => {
   try {
-    const p = await Product.findOne({ barcode: req.params.barcode });
+    const p = await Product.findById(req.params.id);
     if (!p) return res.status(404).json({ error: 'Not found' });
     res.json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() });
   } catch (err) { res.status(500).json({ error: err.message }); }
