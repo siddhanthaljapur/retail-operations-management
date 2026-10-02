@@ -318,22 +318,45 @@ export default function BarcodeScanner() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 mt-4">
                 <button
                   onClick={handleAddToCart}
-                  className="flex-grow bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-3 rounded-xl
-                             font-semibold flex items-center justify-center shadow-lg
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-3 rounded-xl
+                             font-semibold flex flex-col items-center justify-center shadow-lg
                              hover:shadow-xl transition-all active:scale-[0.98]"
                 >
-                  <CartPlusIcon />
-                  Add to Cart — ₹{(scannedProduct.price * quantity).toLocaleString()}
+                  <span className="flex items-center text-sm"><CartPlusIcon /> Billing Cart</span>
+                  <span className="text-xs opacity-90">₹{(scannedProduct.price * quantity).toLocaleString()}</span>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    try {
+                      const updatedProduct = { ...scannedProduct, quantity: scannedProduct.quantity + quantity };
+                      await api.put(`/api/products/${scannedProduct.id}`, updatedProduct);
+                      showToast(`Added ${quantity} to Inventory!`, 'success');
+                      setScannedProduct(updatedProduct);
+                      setQuantity(1);
+                    } catch (err) {
+                      showToast('Failed to update inventory', 'error');
+                    }
+                  }}
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl
+                             font-semibold flex flex-col items-center justify-center shadow-lg
+                             hover:shadow-xl transition-all active:scale-[0.98]"
+                >
+                  <span className="flex items-center text-sm">
+                    <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                    Inventory
+                  </span>
+                  <span className="text-xs opacity-90">+ {quantity} Stock</span>
                 </button>
               </div>
 
               <button
                 onClick={handleScanAgain}
                 className="w-full mt-3 py-2.5 text-blue-500 dark:text-blue-400 font-semibold text-sm
-                           rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                           rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-blue-200 dark:border-blue-900/50"
               >
                 Scan Another Product
               </button>

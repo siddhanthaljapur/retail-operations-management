@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { listProducts, deleteProduct } from '../../services/productService';
 import ProductForm from './ProductForm';
 import BulkUploadModal from './BulkUploadModal';
+import AIInvoiceScanner from './AIInvoiceScanner';
 import Fuse from 'fuse.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
@@ -219,6 +220,7 @@ export default function ProductList() {
   const [sortBy, setSortBy] = useState('default');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isAIScannerOpen, setIsAIScannerOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
 
   const { t } = useTranslation();
@@ -387,6 +389,12 @@ export default function ProductList() {
               </svg>
               {t('products.scanToAdd') || 'Scan to Add'}
             </button>
+            <button onClick={() => setIsAIScannerOpen(true)} className="button-primary bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white flex-shrink-0 w-full md:w-auto flex items-center justify-center gap-1">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              </svg>
+              AI Bill Scanner
+            </button>
             <button onClick={() => setIsBulkModalOpen(true)} className="button-secondary flex-shrink-0 w-full md:w-auto">
               {t('products.bulkUpload')}
             </button>
@@ -454,6 +462,15 @@ export default function ProductList() {
         isOpen={isBulkModalOpen}
         onClose={handleCloseBulkModal}
       />
+      {isAIScannerOpen && (
+        <AIInvoiceScanner
+          onClose={() => setIsAIScannerOpen(false)}
+          onComplete={() => {
+            setIsAIScannerOpen(false);
+            loadProducts();
+          }}
+        />
+      )}
     </div>
   );
 }

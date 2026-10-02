@@ -67,6 +67,13 @@ app.get('/api/products/:id', async (req, res) => {
 app.post('/api/products', async (req, res) => {
   try { const p = await new Product(req.body).save(); res.status(201).json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() }); } catch (err) { res.status(500).json({ error: err.message }); }
 });
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const p = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!p) return res.status(404).json({ error: 'Not found' });
+    res.json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 app.delete('/api/products/:id', async (req, res) => {
   try { await Product.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted' }); } catch (err) { res.status(500).json({ error: err.message }); }
 });
