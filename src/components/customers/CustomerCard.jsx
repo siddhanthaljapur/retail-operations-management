@@ -44,98 +44,67 @@ const CustomerCard = ({ customer, onSendEmail, onViewHistory, onDelete, canManag
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+      day: '2-digit', month: 'short', year: 'numeric'
     });
+  };
+
+  const getInitials = (n) => {
+    if (!n) return '?';
+    return n.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
   };
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="card relative flex flex-col group overflow-hidden"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className="card flex flex-col md:flex-row items-center justify-between p-4 mb-4 hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 w-full"
     >
-      {/* Image Placeholder */}
-      <div className="aspect-w-1 aspect-h-1 w-full rounded-t-2xl overflow-hidden">
-        <AvatarIcon />
+      <div className="flex items-center gap-4 w-full md:w-auto mb-4 md:mb-0">
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md flex-shrink-0">
+          {getInitials(name || 'Customer')}
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{name || t('customerCard.unnamed')}</h3>
+          <div className="flex flex-wrap items-center gap-3 mt-1">
+            {mobile && (
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <PhoneIcon /> <span className="ml-1">{mobile}</span>
+              </div>
+            )}
+            {email && (
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <EmailIcon /> <span className="ml-1">{email}</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Details */}
-      <div className="p-5 flex-grow flex flex-col">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate" title={name}>
-          {/* MODIFIED */}
-          {name || t('customerCard.unnamed')}
-        </h3>
-
-        {/* Contact Info */}
-        <div className="mt-2 space-y-1.5">
-          {mobile && (
-            <div className="flex items-center gap-2">
-              <PhoneIcon />
-              <span className="text-sm text-gray-700 dark:text-gray-300">{mobile}</span>
-            </div>
-          )}
-          {email && (
-            <div className="flex items-center gap-2">
-              <EmailIcon />
-              <span className="text-sm text-gray-700 dark:text-gray-300 truncate" title={email}>{email}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-end">
-          <div className="text-left">
-            {/* MODIFIED */}
+      <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto">
+        <div className="flex gap-6 w-full sm:w-auto border-t sm:border-t-0 border-gray-200 dark:border-gray-700 pt-3 sm:pt-0">
+          <div className="text-center sm:text-right">
             <p className="text-xs text-gray-500 font-medium">{t('customerCard.totalPurchases')}</p>
-            <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
-              {totalPurchaseCount || 0}
-            </p>
+            <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{totalPurchaseCount || 0}</p>
           </div>
-          <div className="text-right">
-            {/* MODIFIED */}
+          <div className="text-center sm:text-right">
             <p className="text-xs text-gray-500 font-medium">{t('customerCard.lastPurchase')}</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
-              {formatDate(lastPurchaseDate)}
-            </p>
+            <p className="text-md font-bold text-gray-900 dark:text-white">{formatDate(lastPurchaseDate)}</p>
           </div>
         </div>
 
-        {/* Action Buttons */}
         {canManage && (
-          <div className="mt-4 space-y-2">
-            <button
-              onClick={() => onSendEmail(customer)}
-              className="button-primary w-full flex items-center justify-center"
-            >
+          <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+            <button onClick={() => onSendEmail(customer)} className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors" title={t('customerCard.sendEmail')}>
               <SendEmailIcon />
-              {/* MODIFIED */}
-              {t('customerCard.sendEmail')}
             </button>
-            <button
-              onClick={() => onViewHistory(customer)}
-              className="button-secondary w-full flex items-center justify-center"
-            >
+            <button onClick={() => onViewHistory(customer)} className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/40 transition-colors" title={t('customerCard.viewHistory')}>
               <HistoryIcon />
-              {/* MODIFIED */}
-              {t('customerCard.viewHistory')}
             </button>
-            <button
-              onClick={() => onDelete(customer)}
-              className="w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium
-                         text-red-500 bg-gray-100 hover:bg-red-100 hover:text-red-600
-                         dark:text-red-400 dark:bg-gray-800/50 dark:hover:bg-red-900/50 dark:hover:text-red-300
-                         transition-all duration-300 disabled:opacity-50"
-              // MODIFIED
-              aria-label={t('customerCard.deleteAria', { name: name || t('customerCard.thisCustomer') })}
-            >
+            <button onClick={() => onDelete(customer)} className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors" title={t('customerCard.delete')}>
               <DeleteIcon />
-              {/* MODIFIED */}
-              <span className="ml-1.5">{t('customerCard.delete')}</span>
             </button>
           </div>
         )}

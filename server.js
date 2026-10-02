@@ -101,8 +101,29 @@ app.post('/api/bills', async (req, res) => {
       return { productId: item.productId, quantity: q, price: p, productName: item.productName };
     });
     
+    let customerName = data.customer?.name || data.customerId || 'Walk-in Customer';
+    let customerEmail = data.customer?.email || '';
+    let customerPhone = data.customer?.mobile || '';
+
+    // Auto-create or update customer
+    let cust = null;
+    if (customerPhone) {
+      cust = await Customer.findOne({ phone: customerPhone });
+    } else if (customerEmail) {
+      cust = await Customer.findOne({ email: customerEmail });
+    } else {
+      cust = await Customer.findOne({ name: customerName });
+    }
+
+    if (!cust) {
+      cust = await new Customer({ name: customerName, email: customerEmail, phone: customerPhone, totalPurchases: 1 }).save();
+    } else {
+      cust.totalPurchases = (cust.totalPurchases || 0) + 1;
+      await cust.save();
+    }
+
     const newBill = {
-      customerId: data.customer?.name || data.customerId,
+      customerId: cust._id.toString(), // Store actual customer ID
       date: new Date().toISOString(),
       totalAmount: data.totalAmount || totalAmount,
       paymentMethod: data.paymentMethod || 'CASH',
