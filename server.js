@@ -91,7 +91,27 @@ app.get('/api/bills', async (req, res) => {
   try { res.json(mapId(await Bill.find())); } catch (err) { res.status(500).json({ error: err.message }); }
 });
 app.post('/api/bills', async (req, res) => {
-  try { const b = await new Bill(req.body).save(); res.status(201).json({ ...b._doc, id: b._id.toString() }); } catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const data = req.body;
+    let totalAmount = 0;
+    const items = (data.items || []).map(item => {
+      const q = item.qty || item.quantity || 1;
+      const p = item.price || 0;
+      totalAmount += (q * p);
+      return { productId: item.productId, quantity: q, price: p, productName: item.productName };
+    });
+    
+    const newBill = {
+      customerId: data.customer?.name || data.customerId,
+      date: new Date().toISOString(),
+      totalAmount: data.totalAmount || totalAmount,
+      paymentMethod: data.paymentMethod || 'CASH',
+      items: items
+    };
+
+    const b = await new Bill(newBill).save(); 
+    res.status(201).json({ ...b._doc, id: b._id.toString() }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // Routes - Users & Notifications
