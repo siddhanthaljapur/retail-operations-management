@@ -134,10 +134,48 @@ app.get('/api/analytics/report', async (req, res) => {
       return sum + (b.items || []).reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
     }, 0);
 
+    // Calculate top products
+    const productStats = {};
+    bills.forEach(b => {
+      (b.items || []).forEach(item => {
+        if (!productStats[item.productId]) {
+          productStats[item.productId] = { name: item.productName || 'Unknown', category: 'Uncategorized', revenue: 0, quantitySold: 0 };
+        }
+        const q = item.qty || item.quantity || 1;
+        const p = item.price || 0;
+        productStats[item.productId].revenue += (q * p);
+        productStats[item.productId].quantitySold += q;
+      });
+    });
+    
+    // Fetch product categories from DB
+    const productIds = Object.keys(productStats);
+    const productsInDb = await Product.find({ _id: { $in: productIds } });
+    productsInDb.forEach(p => {
+       if (productStats[p._id.toString()]) {
+          productStats[p._id.toString()].category = p.category || 'Uncategorized';
+          productStats[p._id.toString()].name = p.name || 'Unknown';
+       }
+    });
+
+    const top_products = Object.values(productStats).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+    // Calculate revenue trend (last 7 days)
+    const revenue_trend = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+       const d = new Date(today);
+       d.setDate(d.getDate() - i);
+       const dateStr = d.toISOString().split('T')[0];
+       const dayBills = bills.filter(b => b.date && b.date.startsWith(dateStr));
+       const dayRev = dayBills.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+       revenue_trend.push({ date: dateStr, totalRevenue: dayRev });
+    }
+
     res.json({
       summary: { total_revenue, total_orders, total_products_sold },
-      revenue_trend: [],
-      top_products: []
+      revenue_trend,
+      top_products
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
