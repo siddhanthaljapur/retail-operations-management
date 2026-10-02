@@ -335,8 +335,8 @@ export default function ProductList() {
         </h2>
       </div>
 
-      <div className="card mb-6 p-4 flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-grow w-full md:w-auto">
+      <div className="card mb-6 p-4 grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row gap-4 items-center">
+        <div className="relative col-span-1 sm:col-span-2 md:col-span-1 flex-grow w-full md:w-auto">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <SearchIcon />
           </div>

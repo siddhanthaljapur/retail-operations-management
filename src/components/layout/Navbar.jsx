@@ -108,18 +108,18 @@ export default function Navbar() {
       {/* === TOP NAVBAR === */}
       <nav className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-md border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16 gap-2">
 
             {/* Left section */}
-            <div className="flex gap-6 items-center">
+            <div className="flex gap-4 items-center min-w-0">
               <Link to="/" className="flex items-center gap-2 flex-shrink-0">
                 <LogoIcon />
-                <span className="font-semibold text-xl text-gray-900 dark:text-white">
+                <span className="font-semibold text-xl text-gray-900 dark:text-white hidden sm:block">
                   Smart Retail
                 </span>
               </Link>
               {user && (
-                <div className="hidden md:flex gap-4">
+                <div className="hidden lg:flex gap-1">
                   <Link to="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}>{t('nav.dashboard')}</Link>
                   <Link to="/products" className={`nav-link ${isActive('/products') ? 'active' : ''}`}>{t('nav.products')}</Link>
                   <Link to="/bills" className={`nav-link ${isActive('/bills') ? 'active' : ''}`}>{t('nav.bills')}</Link>
@@ -139,14 +139,14 @@ export default function Navbar() {
 
             {/* Right section */}
             {user ? (
-              <div className="flex gap-2 md:gap-4 items-center">
-                {/* Profile - hidden on mobile */}
-                <Link to="/profile" className="nav-link text-blue-500 dark:text-blue-400 font-medium hidden md:block">
+              <div className="flex gap-1 sm:gap-2 lg:gap-3 items-center flex-shrink-0">
+                {/* Profile - only on large screens */}
+                <Link to="/profile" className="nav-link text-blue-500 dark:text-blue-400 font-medium hidden lg:block max-w-[160px] truncate">
                   {user.email}
                 </Link>
 
-                {/* Language Selector - hidden on small mobile */}
-                <div className="relative flex items-center hidden sm:flex">
+                {/* Language Selector - hidden on mobile, show on md+ */}
+                <div className="relative items-center hidden md:flex">
                   <LanguageIcon />
                   <select
                     value={language}
@@ -184,15 +184,15 @@ export default function Navbar() {
                 {/* Logout */}
                 <button
                   onClick={logout}
-                  className="bg-red-600 px-3 py-1.5 rounded-md text-sm font-medium text-white hover:bg-red-700 transition-colors hidden sm:block"
+                  className="bg-red-600 px-3 py-1.5 rounded-md text-sm font-medium text-white hover:bg-red-700 transition-colors hidden md:block"
                 >
                   {t('nav.logout')}
                 </button>
 
-                {/* Mobile menu button */}
+                {/* Mobile menu button — shown below lg */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="lg:hidden p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {mobileMenuOpen ? (
@@ -212,7 +212,7 @@ export default function Navbar() {
 
           {/* Mobile dropdown menu */}
           {mobileMenuOpen && user && (
-            <div className="md:hidden py-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+            <div className="lg:hidden py-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
               <Link to="/profile" className="block nav-link" onClick={() => setMobileMenuOpen(false)}>
                 👤 {user.email}
               </Link>
@@ -246,7 +246,7 @@ export default function Navbar() {
 
       {/* === MOBILE BOTTOM NAVIGATION BAR === */}
       {user && (
-        <div className="mobile-bottom-nav md:hidden">
+        <div className="mobile-bottom-nav lg:hidden">
           {bottomNavItems.map(({ path, label, Icon, isScan }) => (
             <Link
               key={path}

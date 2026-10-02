@@ -33,19 +33,10 @@ function clearTokens() {
 }
 
 async function login({ email, password }) {
-  // MOCK LOGIN
-  console.log("Mock login triggered for:", email);
-  
-  // Create a mock JWT token (base64 encoded header.payload.signature)
-  // Payload: {"sub":"owner@smartretail.com","role":"OWNER","exp":4102379999,"iat":1702379999}
-  const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJvd25lckBzbWFydHJldGFpbC5jb20iLCJyb2xlIjoiT1dORVIiLCJleHAiOjQxMDIzNzk5OTksImlhdCI6MTcwMjM3OTk5OX0.mock_signature";
-  
-  saveTokens({
-    accessToken: mockToken,
-    refreshToken: "mock_refresh_token"
-  });
-
-  return { accessToken: mockToken, refreshToken: "mock_refresh_token" };
+  const res = await api.post('/api/auth/login', { email, password });
+  const data = res.data;
+  saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+  return data;
 }
 
 /**
@@ -58,10 +49,12 @@ async function signup(req) {
 }
 
 async function refresh() {
-  // MOCK REFRESH
-  const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJvd25lckBzbWFydHJldGFpbC5jb20iLCJyb2xlIjoiT1dORVIiLCJleHAiOjQxMDIzNzk5OTksImlhdCI6MTcwMjM3OTk5OX0.mock_signature";
-  saveTokens({ accessToken: mockToken });
-  return { accessToken: mockToken };
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) throw new Error("No refresh token");
+  const res = await api.post('/api/auth/refresh', { refreshToken });
+  const data = res.data;
+  saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken || refreshToken });
+  return data;
 }
 
 /**

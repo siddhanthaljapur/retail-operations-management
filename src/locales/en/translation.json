@@ -76,6 +76,7 @@
     "showingLowStock": "Showing Low Stock",
     "bulkUpload": "Bulk Upload",
     "addProduct": "Add Product",
+    "scanToAdd": "Scan to Add",
     "loading": "Loading Products...",
     "error": "Failed to load products. Please try again.",
     "tryAgain": "Try Again",

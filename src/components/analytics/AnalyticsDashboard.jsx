@@ -467,16 +467,16 @@ export default function AnalyticsDashboard() {
       >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-cyan-500 via-blue-500 to-emerald-500 dark:from-cyan-400 dark:via-blue-400 dark:to-emerald-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-cyan-500 via-blue-500 to-emerald-500 dark:from-cyan-400 dark:via-blue-400 dark:to-emerald-400 bg-clip-text text-transparent leading-tight">
               {t('dashboard.title')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.subtitle')}</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">{t('dashboard.subtitle')}</p>
           </div>
 
           {/* -------------------------- DATE PICKER -------------------------- */}
-          <div className="relative z-50">
+          <div className="relative z-50 w-full md:w-auto">
             {/* UPDATED: Theme-aware */}
-            <div className="flex items-center gap-3 bg-gray-200/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 min-w-[280px]">
+            <div className="flex items-center gap-3 bg-gray-200/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 w-full md:min-w-[280px]">
               <CalendarIcon />
               <DatePicker
                 selectsRange={true}
@@ -489,7 +489,7 @@ export default function AnalyticsDashboard() {
                 }}
                 dateFormat="MMM d, yyyy"
                 // UPDATED: Theme-aware text
-                className="bg-transparent text-gray-800 dark:text-gray-200 font-medium focus:outline-none cursor-pointer w-full"
+                className="bg-transparent text-gray-800 dark:text-gray-200 font-medium focus:outline-none cursor-pointer w-full text-sm sm:text-base"
                 placeholderText={t('dashboard.datePlaceholder')}
                 showPopperArrow={false}
                 popperClassName="z-[9999]" // Use your theme-aware class from index.css
@@ -509,7 +509,7 @@ export default function AnalyticsDashboard() {
         <div className="lg:col-span-8">
           <RevenueHeroChart data={revenue_trend} totalRevenue={summary.total_revenue || 0} t={t} theme={theme} />
         </div>
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4 lg:gap-6">
           <StatCard title={t('dashboard.totalRevenue')} value={summary.total_revenue || 0} change={changes.revenue} icon={<RevenueIcon />} color="cyan" t={t} />
           <StatCard title={t('dashboard.totalOrders')} value={summary.total_orders || 0} change={changes.orders} icon={<OrdersIcon />} color="blue" t={t} />
           <StatCard title={t('dashboard.productsSold')} value={summary.total_products_sold || 0} change={changes.products} icon={<ProductsSoldIcon />} color="amber" t={t} />

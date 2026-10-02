@@ -12,7 +12,7 @@ export default function MainLayout() {
     // UPDATED: Now theme-aware + mobile-friendly with bottom padding
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
       <Navbar />
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
+      <main className="max-w-7xl mx-auto p-2 sm:p-4 lg:p-8 pb-24 lg:pb-8">
         {/* All protected child routes will render here */}
         <Outlet />
       </main>
