@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
@@ -66,14 +66,30 @@ export default function BarcodeScanner() {
     setQuantity(1);
 
     try {
-      const html5Qrcode = new Html5Qrcode("barcode-reader");
+      // Explicitly configure supported 1D barcodes and 2D formats
+      const formatsToSupport = [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.QR_CODE
+      ];
+
+      const html5Qrcode = new Html5Qrcode("barcode-reader", { formatsToSupport, verbose: false });
       html5QrcodeRef.current = html5Qrcode;
 
       await html5Qrcode.start(
         { facingMode: "environment" },
         {
-          fps: 10,
-          qrbox: { width: 280, height: 160 },
+          fps: 15,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            return {
+              width: Math.max(240, Math.floor(viewfinderWidth * 0.85)),
+              height: Math.max(140, Math.floor(viewfinderHeight * 0.45))
+            };
+          },
           aspectRatio: 1.0,
         },
         async (decodedText) => {
@@ -106,14 +122,37 @@ export default function BarcodeScanner() {
   };
 
   const handleBarcodeResult = async (code) => {
-    setScannedCode(code);
+    const cleanCode = (code || '').trim();
+    setScannedCode(cleanCode);
     setNotFound(false);
     setScannedProduct(null);
 
     try {
-      const res = await api.get(`/api/products/barcode/${code}`);
-      setScannedProduct(res.data);
-    } catch {
+      // 1. First search full list of products (case-insensitive & space-trimmed)
+      const allRes = await api.get('/api/products');
+      const products = Array.isArray(allRes.data) ? allRes.data : [];
+      
+      const targetClean = cleanCode.replace(/[\s\-]/g, '');
+      const found = products.find(p => {
+        if (!p.barcode) return false;
+        const pClean = p.barcode.trim().replace(/[\s\-]/g, '');
+        return pClean === targetClean || p.barcode.trim() === cleanCode;
+      });
+
+      if (found) {
+        setScannedProduct(found);
+        return;
+      }
+
+      // 2. Direct endpoint search as fallback
+      const res = await api.get(`/api/products/barcode/${encodeURIComponent(cleanCode)}`);
+      if (res.data) {
+        setScannedProduct(res.data);
+      } else {
+        setNotFound(true);
+      }
+    } catch (err) {
+      console.warn("Barcode search fallback to Not Found:", err);
       setNotFound(true);
     }
   };
