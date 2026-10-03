@@ -84,8 +84,20 @@ app.get('/api/products', async (req, res) => {
 });
 app.get('/api/products/barcode/:barcode', async (req, res) => {
   try {
-    const p = await Product.findOne({ barcode: req.params.barcode });
-    if (!p) return res.status(404).json({ error: 'Not found' });
+    const rawCode = (req.params.barcode || '').trim();
+    const cleanCode = rawCode.replace(/[\s\-]/g, '');
+
+    let p = await Product.findOne({ barcode: rawCode });
+    if (!p && cleanCode) {
+      p = await Product.findOne({ 
+        $or: [
+          { barcode: { $regex: new RegExp(`^${cleanCode}$`, 'i') } },
+          { barcode: { $regex: new RegExp(`^${rawCode}$`, 'i') } }
+        ] 
+      });
+    }
+
+    if (!p) return res.status(404).json({ error: 'Product not found for barcode: ' + rawCode });
     res.json({ ...p._doc, id: p._id.toString(), productId: p._id.toString() });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

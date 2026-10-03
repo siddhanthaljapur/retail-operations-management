@@ -40,6 +40,14 @@ export default function BarcodeScanner() {
   const [cameraError, setCameraError] = useState('');
   const [quantity, setQuantity] = useState(1);
 
+  // Quick Add Product states for un-cataloged barcodes
+  const [newProductName, setNewProductName] = useState('');
+  const [newProductPrice, setNewProductPrice] = useState('');
+  const [newProductCostPrice, setNewProductCostPrice] = useState('');
+  const [newProductQuantity, setNewProductQuantity] = useState(10);
+  const [newProductCategory, setNewProductCategory] = useState('General');
+  const [isCreating, setIsCreating] = useState(false);
+
   const scannerRef = useRef(null);
   const html5QrcodeRef = useRef(null);
 
@@ -364,38 +372,144 @@ export default function BarcodeScanner() {
           </div>
         )}
 
-        {/* Not Found */}
+        {/* Not Found -> Quick Add Product Form */}
         {notFound && (
-          <div className="card overflow-hidden animate-in">
-            <div className="bg-gradient-to-r from-red-500 to-orange-500 p-4 text-white text-center">
+          <div className="card overflow-hidden animate-in shadow-2xl border border-red-200 dark:border-red-900/50">
+            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-4 text-white text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <span className="font-bold text-lg">Product Not Found</span>
+                <span className="font-bold text-lg">New Unregistered Barcode</span>
               </div>
-              <span className="text-red-100 text-sm font-mono">Barcode: {scannedCode}</span>
+              <span className="text-amber-100 text-xs font-mono bg-black/20 px-3 py-1 rounded-full inline-block">
+                Barcode: {scannedCode}
+              </span>
             </div>
 
-            <div className="p-6 text-center">
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                No product matches this barcode in our inventory.
+            <div className="p-6">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4 text-center">
+                This item is not in your database yet. Add details below to register it immediately:
               </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleScanAgain}
-                  className="flex-grow bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-3 rounded-xl
-                             font-semibold shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
-                >
-                  Scan Again
-                </button>
-                <button
-                  onClick={() => navigate('/products')}
-                  className="flex-grow button-secondary py-3 rounded-xl"
-                >
-                  Browse Products
-                </button>
-              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newProductName.trim() || !newProductPrice) {
+                  showToast('Please enter Product Name and Selling Price.', 'error');
+                  return;
+                }
+                setIsCreating(true);
+                try {
+                  const payload = {
+                    name: newProductName.trim(),
+                    barcode: scannedCode,
+                    price: parseFloat(newProductPrice) || 0,
+                    costPrice: parseFloat(newProductCostPrice) || Math.round((parseFloat(newProductPrice) || 0) * 0.8),
+                    quantity: parseInt(newProductQuantity, 10) || 10,
+                    category: newProductCategory || 'General',
+                    reorderLevel: 5
+                  };
+
+                  const res = await api.post('/api/products', payload);
+                  showToast(`Successfully added ${res.data.name} to Inventory!`, 'success');
+                  setScannedProduct(res.data);
+                  setNotFound(false);
+                  setNewProductName('');
+                  setNewProductPrice('');
+                  setNewProductCostPrice('');
+                } catch (err) {
+                  showToast('Failed to create product. ' + (err.response?.data?.error || err.message), 'error');
+                } finally {
+                  setIsCreating(false);
+                }
+              }} className="space-y-4">
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Product Name *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="e.g. Dettol Handwash 100ml" 
+                    value={newProductName} 
+                    onChange={(e) => setNewProductName(e.target.value)} 
+                    className="form-input w-full"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Selling Price (₹) *</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      required 
+                      placeholder="e.g. 35.00" 
+                      value={newProductPrice} 
+                      onChange={(e) => setNewProductPrice(e.target.value)} 
+                      className="form-input w-full font-bold text-emerald-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Cost Price (₹)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="e.g. 25.00" 
+                      value={newProductCostPrice} 
+                      onChange={(e) => setNewProductCostPrice(e.target.value)} 
+                      className="form-input w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Initial Stock Qty</label>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      value={newProductQuantity} 
+                      onChange={(e) => setNewProductQuantity(parseInt(e.target.value, 10) || 1)} 
+                      className="form-input w-full font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Category</label>
+                    <select
+                      value={newProductCategory}
+                      onChange={(e) => setNewProductCategory(e.target.value)}
+                      className="form-input w-full text-xs font-semibold"
+                    >
+                      <option value="Personal Care">Personal Care</option>
+                      <option value="Hygiene">Hygiene</option>
+                      <option value="Pharmacy">Pharmacy</option>
+                      <option value="Dairy">Dairy</option>
+                      <option value="Grocery">Grocery</option>
+                      <option value="Snacks">Snacks</option>
+                      <option value="Beverages">Beverages</option>
+                      <option value="Household">Household</option>
+                      <option value="General">General</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleScanAgain}
+                    className="w-1/3 button-secondary py-3 text-xs"
+                  >
+                    Scan Another
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreating}
+                    className="w-2/3 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                  >
+                    {isCreating ? 'Saving...' : '➕ Add to Inventory'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
