@@ -27,7 +27,8 @@
     "react-dom": "^18.2.0",
     "react-i18next": "^16.2.4",
     "react-router-dom": "^6.21.3",
-    "recharts": "^3.3.0"
+    "recharts": "^3.3.0",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@tailwindcss/aspect-ratio": "^0.4.2",

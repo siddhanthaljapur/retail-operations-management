@@ -66,3 +66,8 @@ export async function deleteProduct(productId) {
   const res = await api.delete(`/api/products/${productId}`);
   return res.data;
 }
+
+export async function batchSyncProducts(items) {
+  const res = await api.post('/api/products/batch-sync', { items });
+  return res.data;
+}

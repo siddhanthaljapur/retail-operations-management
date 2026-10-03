@@ -76,6 +76,73 @@ app.put('/api/products/:id', async (req, res) => {
 });
 app.delete('/api/products/:id', async (req, res) => {
   try { await Product.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted' }); } catch (err) { res.status(500).json({ error: err.message }); }
+app.post('/api/products/batch-sync', async (req, res) => {
+  try {
+    const { items = [] } = req.body;
+    let updatedCount = 0;
+    let createdCount = 0;
+    const processedProducts = [];
+
+    for (const item of items) {
+      const qtyToAdd = Number(item.quantity || 1);
+      const costP = Number(item.costPrice || 0);
+      const sellP = Number(item.price || Math.round(costP * 1.25));
+
+      let existing = null;
+      if (item.barcode) {
+        existing = await Product.findOne({ barcode: item.barcode });
+      }
+      if (!existing && item.name) {
+        existing = await Product.findOne({ name: { $regex: new RegExp(`^${item.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
+      }
+
+      if (existing) {
+        existing.quantity = (existing.quantity || 0) + qtyToAdd;
+        if (costP > 0) existing.costPrice = costP;
+        if (sellP > 0) existing.price = sellP;
+        if (item.category && item.category !== 'General') existing.category = item.category;
+        await existing.save();
+        updatedCount++;
+        processedProducts.push({ ...existing._doc, id: existing._id.toString(), productId: existing._id.toString() });
+      } else {
+        const newP = new Product({
+          name: item.name || 'Scanned Wholesaler Product',
+          category: item.category || 'General',
+          barcode: item.barcode || `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          price: sellP,
+          costPrice: costP,
+          quantity: qtyToAdd,
+          reorderLevel: item.reorderLevel || 5
+        });
+        await newP.save();
+        createdCount++;
+        processedProducts.push({ ...newP._doc, id: newP._id.toString(), productId: newP._id.toString() });
+      }
+    }
+
+    // Auto-create notification for inventory update
+    try {
+      await new Notification({
+        message: `AI Bill Scanner: Imported bill with ${items.length} items (${updatedCount} updated, ${createdCount} created).`,
+        date: new Date().toISOString(),
+        read: false,
+        type: 'INVENTORY'
+      }).save();
+    } catch (e) {
+      console.warn("Could not save notification:", e.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      updatedCount,
+      createdCount,
+      totalSynced: processedProducts.length,
+      products: processedProducts
+    });
+  } catch (err) {
+    console.error("Error in /api/products/batch-sync:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Routes - Customers
